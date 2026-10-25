@@ -4,3 +4,4 @@ python-dotenv>=1.0
 truststore>=0.9; python_version >= "3.10"
 fastapi
 uvicorn
+apscheduler
