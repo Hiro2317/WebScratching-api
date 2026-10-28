@@ -89,8 +89,7 @@ class TmdbClient:
     def _search(self, title: str, year: Optional[str]) -> TmdbMatch:
         if not self.api_key:
             if not self._warned_no_key:
-                logger.warning("TMDB_API_KEY not set — skipping TMDb/IMDb matching.")
-                self._warned_no_key = True
+                logger.warning("Error TMDB_API_KEY not set — skipping TMDb/IMDb matching.")
             return TmdbMatch(canonical_title=clean_title(title))
 
         cleaned = clean_title(title)
@@ -146,5 +145,5 @@ class TmdbClient:
             resp.raise_for_status()
             return resp.json().get("imdb_id")
         except requests.RequestException as exc:
-            logger.warning("TMDb external_ids failed for id=%s: %s", tmdb_id, exc)
+            logger.warning("Error TMDb external_ids failed for id=%s: %s", tmdb_id, exc)
             return None
