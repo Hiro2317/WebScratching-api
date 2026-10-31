@@ -11,7 +11,12 @@ qualsiasi provincia (o per tutta Italia) e abbina ogni titolo al suo
    - `/cinema/trovacinema/` → elenco di tutte le province coperte dal sito;
    - `/cinema/{provincia}/` → elenco dei cinema in quella provincia;
    - `/cinema/{provincia}/{cinema}/{id}/` → film in programmazione in quel
-     cinema, con sala, posti e orari.
+     cinema, con sala, posti e orari **di oggi**;
+   - `/cinema/{provincia}/{cinema}/{id}/ticket/?idf={film}` → la pagina
+     "Acquista biglietto e vedi tutte le date" di ogni film: orari di **tutti
+     i giorni in programmazione**, con link d'acquisto Webtic. Se un film non
+     ha questa pagina restano gli orari di oggi. `FETCH_ALL_DAYS=0` la salta
+     (scraping più veloce, solo oggi).
 2. `tmdb.py` risolve ogni titolo (preferendo il titolo originale quando
    disponibile, con l'anno di uscita come filtro) su TMDb, recuperando
    `tmdb_id` e il collegato `imdb_id`.
@@ -91,7 +96,10 @@ Un file `output/{provincia}.json` per provincia, es.:
           "uscita": "15/10/2026",
           "cast": "Massimiliano Caiazzo, ...",
           "showtimes": [
-            {"sala": "3", "posti": 144, "times": ["18:30", "21:00"]}
+            {"sala": "3", "posti": 144, "times": ["18:30", "21:00"], "date": "2026-10-31",
+             "booking_links": ["https://secure.webtic.it/...", "https://secure.webtic.it/..."]},
+            {"sala": "3", "posti": 144, "times": ["21:00"], "date": "2026-11-01",
+             "booking_links": ["https://secure.webtic.it/..."]}
           ],
           "tmdb_id": 693134,
           "imdb_id": "tt15239678",
@@ -103,6 +111,13 @@ Un file `output/{provincia}.json` per provincia, es.:
   ]
 }
 ```
+
+## API (FastAPI, porta 4001)
+
+- `GET /provinces` → slug, nome, sigle (es. `FC`) e timestamp di ogni provincia scaricata.
+- `GET /province/{slug}` → la provincia con tutti i giorni in programmazione;
+  `?date=YYYY-MM-DD` per un solo giorno.
+- `GET /data` → tutte le province; `GET /status` → stato dello scheduler (scraping ogni 24 ore).
 
 ## Nota etica / robots.txt
 
