@@ -29,8 +29,11 @@ dell'anno nuovo. Non testato uno scraping completo (comingsoon.it non è raggiun
 container cloud).
 
 ## Deploy (Coolify)
-1. Mergiare/pushare su `main` del repo.
-2. Coolify → applicazione dello scraper → **Redeploy** (build dal `Dockerfile`, porta 4001).
+Repository: fork `Leo0541/WebScratching-api` (l'originale è `Hiro2317/WebScratching-api`, dove
+Claude non ha accesso in scrittura). Le modifiche sono già su `main` del fork.
+1. Coolify → applicazione dello scraper → Configuration → General → Source/Git: repository
+   `https://github.com/Leo0541/WebScratching-api`, branch `main` (se puntava a quello di Hiro2317).
+2. **Redeploy** (build dal `Dockerfile`, porta 4001).
 3. All'avvio lo scheduler rifà subito lo scraping di tutte le province (poi ogni 24 ore): finché
    non finisce, le province non ancora riscaricate restano col vecchio formato (solo oggi, senza
    `date`). L'edge function di Cinemate gestisce entrambi i formati.
