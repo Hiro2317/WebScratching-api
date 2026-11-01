@@ -1,7 +1,7 @@
 import os
 import json
 from fastapi import FastAPI, HTTPException
-from typing import List
+from typing import List, Optional
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime, timezone
 
@@ -39,7 +39,7 @@ def load_all_json_data() -> List[dict]:
 @app.get("/")
 def read_root():
     """Endpoint di benvenuto."""
-    return {"message": "API Locale Cinema attiva. Usa /data o /province/{nome} per i dati."}
+    return {"message": "API Locale Cinema attiva. Usa /data, /provinces o /province/{nome}[?date=YYYY-MM-DD] per i dati."}
 
 @app.get("/data", summary="Ottieni tutti i dati di tutte le province")
 def get_all_data():
@@ -49,14 +49,44 @@ def get_all_data():
         raise HTTPException(status_code=404, detail="Nessun file JSON trovato nella cartella output.")
     return data
 
+@app.get("/provinces", summary="Elenco delle province disponibili")
+def list_provinces():
+    """Slug, nome e sigle (es. FC) di ogni provincia scaricata: l'app Cinemate lo usa per
+    trovare la provincia dell'utente a partire dal nome o dalla sigla restituiti dal GPS."""
+    result = []
+    for item in load_all_json_data():
+        codes = sorted({c.get("province_code") for c in item.get("cinemas", []) if c.get("province_code")})
+        result.append({
+            "province": item.get("province"),
+            "province_name": item.get("province_name"),
+            "codes": codes,
+            "timestamp": item.get("timestamp"),
+            "total_cinemas": item.get("total_cinemas"),
+        })
+    return result
+
 @app.get("/province/{province_name}", summary="Filtra per nome provincia")
-def get_by_province(province_name: str):
-    """Cerca e restituisce i dati relativi a una specifica provincia (es. 'agrigento')."""
+def get_by_province(province_name: str, date: Optional[str] = None):
+    """Cerca e restituisce i dati relativi a una specifica provincia (es. 'agrigento').
+    Ogni gruppo di orari ha il suo giorno (`date`, YYYY-MM-DD): di default ci sono tutti i giorni
+    in programmazione, con `?date=2026-11-01` solo quel giorno."""
     all_data = load_all_json_data()
     for item in all_data:
         if item.get("province", "").lower() == province_name.lower():
-            return item
+            return filter_by_date(item, date) if date else item
     raise HTTPException(status_code=404, detail=f"Provincia '{province_name}' non trovata.")
+
+def filter_by_date(item: dict, day: str) -> dict:
+    """Copia della provincia con i soli orari del giorno richiesto (film senza orari quel giorno esclusi)."""
+    cinemas = []
+    for cinema in item.get("cinemas", []):
+        movies = []
+        for movie in cinema.get("movies", []):
+            showtimes = [s for s in movie.get("showtimes", []) if s.get("date") == day]
+            if showtimes:
+                movies.append({**movie, "showtimes": showtimes})
+        cinemas.append({**cinema, "movies": movies})
+    return {**item, "cinemas": cinemas}
 
 # Funzione per l'aggiornamento automatico dei dati tramite la pipeline
 def job_aggiornamento_dati():

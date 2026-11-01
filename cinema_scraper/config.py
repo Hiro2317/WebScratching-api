@@ -49,5 +49,10 @@ NON_PROVINCE_SLUGS = {
     "trovacinema",
 }
 
+# Per ogni film scarica anche la pagina biglietti, che ha gli orari di tutti i giorni in
+# programmazione (la scheda del cinema ha solo quelli di oggi). Una richiesta in più per film:
+# lo scraping completo dura di più. FETCH_ALL_DAYS=0 per tornare ai soli orari di oggi.
+FETCH_ALL_DAYS = os.environ.get("FETCH_ALL_DAYS", "1").strip().lower() not in ("0", "false", "no")
+
 DEFAULT_OUTPUT_DIR = "output"
 DEFAULT_CACHE_PATH = "tmdb_cache.json"
